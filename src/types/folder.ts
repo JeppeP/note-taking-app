@@ -45,3 +45,14 @@ export const DEFAULT_FOLDER_ICONS = [
   "star",
   "zap",
 ];
+
+// Import Note type for UnifiedListItem - will be used with actual Note from notes-store
+import type { Note } from "./note";
+
+export interface FolderWithChildren extends Folder {
+  children: FolderWithChildren[];
+}
+
+export type UnifiedListItem =
+  | { type: "folder"; folder: FolderWithChildren; mostRecentDate: Date }
+  | { type: "note"; note: Note };

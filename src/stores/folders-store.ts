@@ -3,7 +3,8 @@
 import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { db } from "@/lib/db";
-import type { Folder, CreateFolderInput, UpdateFolderInput, DEFAULT_FOLDER_COLORS } from "@/types";
+import type { Folder, CreateFolderInput, UpdateFolderInput, FolderWithChildren, UnifiedListItem } from "@/types";
+import type { Note } from "@/types";
 
 interface FoldersState {
   folders: Folder[];
@@ -17,11 +18,14 @@ interface FoldersState {
   deleteFolder: (id: string) => Promise<void>;
   getFolderTree: () => FolderWithChildren[];
   getFolder: (id: string) => Folder | undefined;
+
+  // Unified list selectors
+  getMostRecentNoteDate: (folderId: string, notes: Note[]) => Date | null;
+  getUnifiedList: (notes: Note[]) => UnifiedListItem[];
 }
 
-export interface FolderWithChildren extends Folder {
-  children: FolderWithChildren[];
-}
+// Re-export FolderWithChildren for backward compatibility
+export type { FolderWithChildren };
 
 export const useFoldersStore = create<FoldersState>((set, get) => ({
   folders: [],
@@ -132,5 +136,57 @@ export const useFoldersStore = create<FoldersState>((set, get) => ({
 
   getFolder: (id: string) => {
     return get().folders.find((f) => f.id === id);
+  },
+
+  getMostRecentNoteDate: (folderId: string, notes: Note[]) => {
+    const { folders } = get();
+    const descendantIds = new Set<string>();
+
+    // Collect all descendant folder IDs (including the folder itself)
+    const collectDescendants = (id: string) => {
+      descendantIds.add(id);
+      folders.filter((f) => f.parentId === id).forEach((f) => collectDescendants(f.id));
+    };
+    collectDescendants(folderId);
+
+    // Find most recent note in any of these folders
+    const folderNotes = notes.filter(
+      (n) => n.folderId && descendantIds.has(n.folderId) && !n.isArchived
+    );
+    if (folderNotes.length === 0) return null;
+
+    return new Date(Math.max(...folderNotes.map((n) => n.updatedAt.getTime())));
+  },
+
+  getUnifiedList: (notes: Note[]) => {
+    const { folders, getMostRecentNoteDate, getFolderTree } = get();
+
+    // Get root-level folders with children
+    const rootFolderTree = getFolderTree();
+
+    // Get root-level notes (no folder, not pinned, not archived)
+    const rootNotes = notes.filter(
+      (n) => !n.folderId && !n.isPinned && !n.isArchived
+    );
+
+    // Build unified list items
+    const items: UnifiedListItem[] = [
+      ...rootFolderTree.map((folder) => ({
+        type: "folder" as const,
+        folder,
+        mostRecentDate: getMostRecentNoteDate(folder.id, notes) || folder.updatedAt,
+      })),
+      ...rootNotes.map((note) => ({
+        type: "note" as const,
+        note,
+      })),
+    ];
+
+    // Sort by recency (most recent first)
+    return items.sort((a, b) => {
+      const dateA = a.type === "folder" ? a.mostRecentDate : a.note.updatedAt;
+      const dateB = b.type === "folder" ? b.mostRecentDate : b.note.updatedAt;
+      return dateB.getTime() - dateA.getTime();
+    });
   },
 }));

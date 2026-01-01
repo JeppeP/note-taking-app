@@ -23,12 +23,12 @@ import { useNotesStore } from "@/stores/notes-store";
 import { useFoldersStore, type FolderWithChildren } from "@/stores/folders-store";
 import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils/cn";
-import type { Folder } from "@/types";
+import type { Folder, UnifiedListItem } from "@/types";
 
 export function Sidebar() {
   const router = useRouter();
   const { notes, loadNotes, createNote, currentNoteId, setCurrentNote, updateNote } = useNotesStore();
-  const { folders, loadFolders, getFolderTree } = useFoldersStore();
+  const { folders, loadFolders, getFolderTree, getUnifiedList } = useFoldersStore();
   const { sidebarOpen, expandedFolders, toggleFolder, toggleAIPanel, toggleCommandPalette } = useUIStore();
 
   // Dialog state
@@ -88,12 +88,8 @@ export function Sidebar() {
     }
   };
 
-  const folderTree = getFolderTree();
   const pinnedNotes = notes.filter((n) => n.isPinned && !n.isArchived);
-  const recentNotes = notes
-    .filter((n) => !n.isPinned && !n.isArchived)
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-    .slice(0, 10);
+  const unifiedList = getUnifiedList(notes);
 
   if (!sidebarOpen) return null;
 
@@ -154,52 +150,22 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* Folders */}
-          <div className="mb-4">
-            <div className="mb-2 flex items-center justify-between px-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                Folders
-              </h3>
-              <button
-                onClick={() => {
-                  setCreateFolderParentId(null);
-                  setCreateFolderOpen(true);
-                }}
-                className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
-                title="Create folder"
-              >
-                <FolderPlusIcon className="h-3.5 w-3.5" />
-              </button>
-            </div>
-            {folderTree.length > 0 ? (
-              <ul className="space-y-1">
-                {folderTree.map((folder) => (
-                  <FolderItem
-                    key={folder.id}
-                    folder={folder}
-                    notes={notes}
-                    expandedFolders={expandedFolders}
-                    toggleFolder={toggleFolder}
-                    currentNoteId={currentNoteId}
-                    onNoteClick={handleNoteClick}
-                    onEditFolder={handleEditFolder}
-                    onDeleteFolder={handleDeleteFolder}
-                    onCreateSubfolder={handleCreateSubfolder}
-                    onMoveNote={handleMoveNote}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <p className="px-2 text-sm text-neutral-400">No folders yet</p>
-            )}
-          </div>
-
-          {/* Recent Notes */}
-          <RecentSection
-            notes={recentNotes}
+          {/* Unified Notes List */}
+          <UnifiedListSection
+            unifiedList={unifiedList}
+            notes={notes}
             currentNoteId={currentNoteId}
+            expandedFolders={expandedFolders}
+            toggleFolder={toggleFolder}
             onNoteClick={handleNoteClick}
+            onEditFolder={handleEditFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onCreateSubfolder={handleCreateSubfolder}
             onMoveNote={handleMoveNote}
+            onCreateFolder={() => {
+              setCreateFolderParentId(null);
+              setCreateFolderOpen(true);
+            }}
           />
         </nav>
 
@@ -286,25 +252,44 @@ function NoteItem({ note, isActive, onClick }: NoteItemProps) {
   );
 }
 
-interface RecentSectionProps {
-  notes: Array<{ id: string; title: string; updatedAt: Date }>;
+interface UnifiedListSectionProps {
+  unifiedList: UnifiedListItem[];
+  notes: Array<{ id: string; title: string; folderId: string | null; updatedAt: Date }>;
   currentNoteId: string | null;
+  expandedFolders: string[];
+  toggleFolder: (id: string) => void;
   onNoteClick: (id: string) => void;
+  onEditFolder: (folder: Folder) => void;
+  onDeleteFolder: (folder: Folder) => void;
+  onCreateSubfolder: (parentId: string) => void;
   onMoveNote: (noteId: string, folderId: string | null) => void;
+  onCreateFolder: () => void;
 }
 
-function RecentSection({ notes, currentNoteId, onNoteClick, onMoveNote }: RecentSectionProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
+function UnifiedListSection({
+  unifiedList,
+  notes,
+  currentNoteId,
+  expandedFolders,
+  toggleFolder,
+  onNoteClick,
+  onEditFolder,
+  onDeleteFolder,
+  onCreateSubfolder,
+  onMoveNote,
+  onCreateFolder,
+}: UnifiedListSectionProps) {
+  const [isDragOverRoot, setIsDragOverRoot] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    setIsDragOver(true);
+    setIsDragOverRoot(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(false);
+    setIsDragOverRoot(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -314,35 +299,59 @@ function RecentSection({ notes, currentNoteId, onNoteClick, onMoveNote }: Recent
       // Remove from folder by setting folderId to null
       onMoveNote(noteId, null);
     }
-    setIsDragOver(false);
+    setIsDragOverRoot(false);
   };
 
   return (
     <div
-      className="mb-4"
+      className={cn(
+        "mb-4 rounded-lg transition-colors",
+        isDragOverRoot && "bg-primary-50 ring-2 ring-primary-300"
+      )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <h3
-        className={cn(
-          "mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-neutral-400 rounded transition-colors",
-          isDragOver && "bg-primary-50 ring-2 ring-primary-300 py-1"
-        )}
-      >
-        {isDragOver ? "Drop to remove from folder" : "Recent"}
-      </h3>
-      <ul className="space-y-1">
-        {notes.map((note) => (
-          <NoteItem
-            key={note.id}
-            note={note}
-            isActive={currentNoteId === note.id}
-            onClick={() => onNoteClick(note.id)}
-          />
-        ))}
-      </ul>
-      {notes.length === 0 && (
+      <div className="mb-2 flex items-center justify-between px-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          {isDragOverRoot ? "Drop to remove from folder" : "Notes"}
+        </h3>
+        <button
+          onClick={onCreateFolder}
+          className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+          title="Create folder"
+        >
+          <FolderPlusIcon className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {unifiedList.length > 0 ? (
+        <ul className="space-y-1">
+          {unifiedList.map((item) =>
+            item.type === "folder" ? (
+              <FolderItem
+                key={item.folder.id}
+                folder={item.folder}
+                notes={notes}
+                expandedFolders={expandedFolders}
+                toggleFolder={toggleFolder}
+                currentNoteId={currentNoteId}
+                onNoteClick={onNoteClick}
+                onEditFolder={onEditFolder}
+                onDeleteFolder={onDeleteFolder}
+                onCreateSubfolder={onCreateSubfolder}
+                onMoveNote={onMoveNote}
+              />
+            ) : (
+              <NoteItem
+                key={item.note.id}
+                note={item.note}
+                isActive={currentNoteId === item.note.id}
+                onClick={() => onNoteClick(item.note.id)}
+              />
+            )
+          )}
+        </ul>
+      ) : (
         <p className="px-2 text-sm text-neutral-400">No notes yet</p>
       )}
     </div>
@@ -488,36 +497,39 @@ function FolderItem({
               </motion.div>
             ))}
             {folderNotes.map((note, index) => (
-              <motion.li
+              <motion.div
                 key={note.id}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: (folder.children.length + index) * 0.03 }}
-                style={{ paddingLeft: `${(depth + 1) * 12 + 4}px` }}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("noteId", note.id);
-                  e.dataTransfer.effectAllowed = "move";
-                  (e.target as HTMLElement).style.opacity = "0.5";
-                }}
-                onDragEnd={(e) => {
-                  (e.target as HTMLElement).style.opacity = "1";
-                }}
-                className="cursor-grab active:cursor-grabbing"
               >
-                <button
-                  onClick={() => onNoteClick(note.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
-                    currentNoteId === note.id
-                      ? "bg-primary-100 text-primary-700"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-                  )}
+                <li
+                  style={{ paddingLeft: `${(depth + 1) * 12 + 4}px` }}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("noteId", note.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    (e.target as HTMLElement).style.opacity = "0.5";
+                  }}
+                  onDragEnd={(e) => {
+                    (e.target as HTMLElement).style.opacity = "1";
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
                 >
-                  <FileTextIcon className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate flex-1">{note.title || "Untitled"}</span>
-                </button>
-              </motion.li>
+                  <button
+                    onClick={() => onNoteClick(note.id)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
+                      currentNoteId === note.id
+                        ? "bg-primary-100 text-primary-700"
+                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                    )}
+                  >
+                    <FileTextIcon className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate flex-1">{note.title || "Untitled"}</span>
+                  </button>
+                </li>
+              </motion.div>
             ))}
           </motion.ul>
         )}
