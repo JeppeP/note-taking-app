@@ -29,7 +29,7 @@ export function Sidebar() {
   const router = useRouter();
   const { notes, loadNotes, createNote, currentNoteId, setCurrentNote, updateNote } = useNotesStore();
   const { folders, loadFolders, getFolderTree, getUnifiedList } = useFoldersStore();
-  const { sidebarOpen, expandedFolders, toggleFolder, toggleAIPanel, toggleCommandPalette } = useUIStore();
+  const { expandedFolders, toggleFolder, toggleAIPanel, toggleCommandPalette } = useUIStore();
 
   // Dialog state
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -91,11 +91,13 @@ export function Sidebar() {
   const pinnedNotes = notes.filter((n) => n.isPinned && !n.isArchived);
   const unifiedList = getUnifiedList(notes);
 
-  if (!sidebarOpen) return null;
+  // Note: Visibility is controlled by parent layout via CSS breakpoints
+  // Desktop: always visible (hidden md:block wrapper)
+  // Mobile: controlled by MobileSidebarOverlay component
 
   return (
     <>
-      <aside className="flex h-full w-[280px] flex-col border-r border-neutral-200 bg-white">
+      <aside className="flex h-full w-[280px] flex-col border-r border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <h1 className="text-lg font-semibold bg-gradient-to-r from-primary-500 to-accent-500 bg-clip-text text-transparent">
@@ -118,11 +120,11 @@ export function Sidebar() {
         <div className="px-3 pb-3">
           <button
             onClick={toggleCommandPalette}
-            className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-500 hover:bg-neutral-100 transition-colors"
+            className="flex w-full items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-500 hover:bg-neutral-100 transition-colors dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
           >
             <SearchIcon className="h-4 w-4" />
             <span>Search...</span>
-            <kbd className="ml-auto rounded bg-neutral-200 px-1.5 py-0.5 text-xs font-medium text-neutral-600">
+            <kbd className="ml-auto rounded bg-neutral-200 px-1.5 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-700 dark:text-neutral-400">
               ⌘K
             </kbd>
           </button>
@@ -170,7 +172,7 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-neutral-200 p-3">
+        <div className="border-t border-neutral-200 p-3 dark:border-neutral-700">
           <Button
             variant="ghost"
             className="w-full justify-start"
@@ -241,8 +243,8 @@ function NoteItem({ note, isActive, onClick }: NoteItemProps) {
         className={cn(
           "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
           isActive
-            ? "bg-primary-100 text-primary-700"
-            : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+            ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400"
+            : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
         )}
       >
         <FileTextIcon className="h-4 w-4 flex-shrink-0" />
@@ -306,7 +308,7 @@ function UnifiedListSection({
     <div
       className={cn(
         "mb-4 rounded-lg transition-colors",
-        isDragOverRoot && "bg-primary-50 ring-2 ring-primary-300"
+        isDragOverRoot && "bg-primary-50 ring-2 ring-primary-300 dark:bg-primary-500/20"
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -318,7 +320,7 @@ function UnifiedListSection({
         </h3>
         <button
           onClick={onCreateFolder}
-          className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors"
+          className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 transition-colors dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
           title="Create folder"
         >
           <FolderPlusIcon className="h-3.5 w-3.5" />
@@ -420,8 +422,8 @@ function FolderItem({
     >
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors",
-          isDragOver && "bg-primary-50 ring-2 ring-primary-300"
+          "group flex items-center gap-1 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors dark:text-neutral-400 dark:hover:bg-neutral-800",
+          isDragOver && "bg-primary-50 ring-2 ring-primary-300 dark:bg-primary-500/20"
         )}
         style={{ paddingLeft: `${depth * 12 + 4}px` }}
       >
@@ -444,8 +446,8 @@ function FolderItem({
         </button>
         <DropdownMenu
           trigger={
-            <button className="rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-neutral-200 transition-all">
-              <MoreHorizontalIcon className="h-3.5 w-3.5 text-neutral-500" />
+            <button className="rounded p-1 opacity-0 group-hover:opacity-100 hover:bg-neutral-200 transition-all dark:hover:bg-neutral-700">
+              <MoreHorizontalIcon className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
             </button>
           }
           align="right"
@@ -521,8 +523,8 @@ function FolderItem({
                     className={cn(
                       "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
                       currentNoteId === note.id
-                        ? "bg-primary-100 text-primary-700"
-                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                        ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400"
+                        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
                     )}
                   >
                     <FileTextIcon className="h-4 w-4 flex-shrink-0" />

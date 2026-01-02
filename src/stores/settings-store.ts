@@ -4,13 +4,17 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { AISettings } from "@/types";
 
+export type Theme = "light" | "dark" | "system";
+
 interface SettingsState {
   aiSettings: AISettings;
+  theme: Theme;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   setAPIKey: (key: string) => void;
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
+  setTheme: (theme: Theme) => void;
   hasAPIKey: () => boolean;
 }
 
@@ -24,6 +28,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       aiSettings: DEFAULT_AI_SETTINGS,
+      theme: "system" as Theme,
       _hasHydrated: false,
 
       setHasHydrated: (state: boolean) => {
@@ -45,6 +50,8 @@ export const useSettingsStore = create<SettingsState>()(
           aiSettings: { ...state.aiSettings, temperature: Math.max(0, Math.min(2, temp)) },
         })),
 
+      setTheme: (theme: Theme) => set({ theme }),
+
       hasAPIKey: () => {
         const { aiSettings } = get();
         return aiSettings.apiKey.length > 0;
@@ -55,6 +62,7 @@ export const useSettingsStore = create<SettingsState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         aiSettings: state.aiSettings,
+        theme: state.theme,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

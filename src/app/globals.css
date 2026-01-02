@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 /* Modern & Vibrant Color Palette using OKLCH */
 @theme {
@@ -105,4 +106,86 @@ body {
 
 .gradient-ai {
   background: linear-gradient(135deg, var(--color-accent-500), var(--color-success));
+}
+
+/* Dark mode overrides */
+.dark {
+  /* Invert neutral scale for dark backgrounds */
+  --color-neutral-50: oklch(0.12 0.015 270);
+  --color-neutral-100: oklch(0.15 0.015 270);
+  --color-neutral-200: oklch(0.20 0.015 270);
+  --color-neutral-300: oklch(0.28 0.01 270);
+  --color-neutral-400: oklch(0.40 0.01 270);
+  --color-neutral-500: oklch(0.55 0.01 270);
+  --color-neutral-600: oklch(0.65 0.01 270);
+  --color-neutral-700: oklch(0.75 0.005 270);
+  --color-neutral-800: oklch(0.85 0.005 270);
+  --color-neutral-900: oklch(0.92 0.005 270);
+  --color-neutral-950: oklch(0.96 0.005 270);
+
+  /* Slightly brighter primary for dark mode */
+  --color-primary-50: oklch(0.20 0.04 285);
+  --color-primary-100: oklch(0.25 0.06 285);
+  --color-primary-200: oklch(0.32 0.10 285);
+  --color-primary-300: oklch(0.42 0.14 285);
+  --color-primary-400: oklch(0.55 0.18 285);
+  --color-primary-500: oklch(0.65 0.22 285);
+  --color-primary-600: oklch(0.72 0.20 285);
+  --color-primary-700: oklch(0.80 0.16 285);
+
+  /* Slightly brighter accent for dark mode */
+  --color-accent-50: oklch(0.18 0.04 230);
+  --color-accent-100: oklch(0.22 0.06 230);
+  --color-accent-200: oklch(0.30 0.10 230);
+  --color-accent-300: oklch(0.40 0.14 230);
+  --color-accent-400: oklch(0.52 0.18 230);
+  --color-accent-500: oklch(0.65 0.20 230);
+  --color-accent-600: oklch(0.72 0.18 230);
+}
+
+.dark body {
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
+}
+
+.dark ::selection {
+  background-color: var(--color-primary-400);
+  color: var(--color-primary-100);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: var(--color-neutral-400);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-neutral-500);
+}
+
+/* Dark mode overrides for components using bg-white */
+.dark aside,
+.dark [class*="bg-white"],
+.dark [class*="bg-neutral-50"] {
+  background-color: var(--color-neutral-50) !important;
+}
+
+.dark [class*="border-neutral-200"] {
+  border-color: var(--color-neutral-300) !important;
+}
+
+/* Safe area utilities for mobile devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  /* Ensure proper touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

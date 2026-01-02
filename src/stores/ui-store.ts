@@ -37,7 +37,8 @@ export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
       // Initial state
-      sidebarOpen: true,
+      // sidebarOpen only controls mobile overlay; desktop sidebar is always visible via CSS
+      sidebarOpen: false,
       sidebarWidth: 280,
       expandedFolders: [],
       aiPanelOpen: false,
@@ -75,7 +76,7 @@ export const useUIStore = create<UIState>()(
       name: "notes-ui-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        sidebarOpen: state.sidebarOpen,
+        // Don't persist sidebarOpen - it only controls mobile overlay
         sidebarWidth: state.sidebarWidth,
         expandedFolders: state.expandedFolders,
       }),
