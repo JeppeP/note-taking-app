@@ -12,10 +12,10 @@ interface SettingsState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   setAPIKey: (key: string) => void;
+  hasAPIKey: () => boolean;
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
   setTheme: (theme: Theme) => void;
-  hasAPIKey: () => boolean;
 }
 
 const DEFAULT_AI_SETTINGS: AISettings = {
@@ -40,6 +40,11 @@ export const useSettingsStore = create<SettingsState>()(
           aiSettings: { ...state.aiSettings, apiKey: key },
         })),
 
+      hasAPIKey: () => {
+        const { aiSettings } = get();
+        return aiSettings.apiKey.length > 0;
+      },
+
       setModel: (model: string) =>
         set((state) => ({
           aiSettings: { ...state.aiSettings, model },
@@ -51,11 +56,6 @@ export const useSettingsStore = create<SettingsState>()(
         })),
 
       setTheme: (theme: Theme) => set({ theme }),
-
-      hasAPIKey: () => {
-        const { aiSettings } = get();
-        return aiSettings.apiKey.length > 0;
-      },
     }),
     {
       name: "notes-settings-storage",

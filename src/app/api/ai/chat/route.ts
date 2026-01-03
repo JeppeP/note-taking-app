@@ -1,5 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { rateLimit, getClientIP } from "@/lib/rate-limit";
 
 export const runtime = "edge";
 
@@ -14,20 +15,47 @@ Guidelines:
 - Reference specific parts of notes when applicable`;
 
 export async function POST(req: Request) {
+  // Rate limiting check
+  const ip = getClientIP(req);
+  const limit = rateLimit(ip);
+
+  if (!limit.success) {
+    return new Response(
+      JSON.stringify({
+        error: "Too many requests. Please try again later.",
+        resetAt: limit.resetAt.toISOString(),
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "X-RateLimit-Limit": String(limit.limit),
+          "X-RateLimit-Remaining": String(limit.remaining),
+          "X-RateLimit-Reset": limit.resetAt.toISOString(),
+        },
+      }
+    );
+  }
+
   try {
     const { messages, noteContext, apiKey, model = "gpt-4o-mini" } = await req.json();
 
+    // Validate API key
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "API key required" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "API key is required" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const systemMessage = noteContext
       ? `${SYSTEM_PROMPT}\n\nNote context:\n${noteContext}`
       : SYSTEM_PROMPT;
 
+    // Use user-provided API key
     const openai = createOpenAI({ apiKey });
 
     const result = streamText({

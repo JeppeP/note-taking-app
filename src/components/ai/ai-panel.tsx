@@ -120,23 +120,6 @@ function TabButton({ active, onClick, icon, label }: TabButtonProps) {
   );
 }
 
-function NoAPIKey() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      <AlertCircleIcon className="h-12 w-12 text-neutral-300 mb-4" />
-      <h3 className="font-semibold text-neutral-900 mb-2">API Key Required</h3>
-      <p className="text-sm text-neutral-500 mb-4">
-        Add your OpenAI API key in Settings to use AI features.
-      </p>
-      <Button
-        variant="primary"
-        onClick={() => window.location.href = "/settings"}
-      >
-        Go to Settings
-      </Button>
-    </div>
-  );
-}
 
 function WriteTab() {
   const { aiSettings } = useSettingsStore();
@@ -457,4 +440,22 @@ function ActionIcon({ action }: { action: string }) {
     default:
       return <SparklesIcon className="h-4 w-4" />;
   }
+}
+
+function NoAPIKey() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+      <AlertCircleIcon className="h-12 w-12 text-neutral-300 mb-4" />
+      <h3 className="font-semibold text-neutral-900 mb-2">API Key Required</h3>
+      <p className="text-sm text-neutral-500 mb-4">
+        Add your OpenAI API key in Settings to use AI features.
+      </p>
+      <Button
+        variant="primary"
+        onClick={() => window.location.href = "/settings"}
+      >
+        Go to Settings
+      </Button>
+    </div>
+  );
 }

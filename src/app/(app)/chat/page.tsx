@@ -40,24 +40,23 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Show setup message if no API key
   if (!hasAPIKey()) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center max-w-md">
-          <AlertCircleIcon className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-            API Key Required
-          </h2>
-          <p className="text-neutral-500 mb-6">
-            Add your OpenAI API key in Settings to chat with your notes using AI.
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => window.location.href = "/settings"}
-          >
-            Go to Settings
-          </Button>
-        </div>
+      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <AlertCircleIcon className="h-16 w-16 text-neutral-300 mb-6" />
+        <h2 className="text-xl font-semibold text-neutral-900 mb-2">
+          API Key Required
+        </h2>
+        <p className="text-neutral-500 mb-6 max-w-sm">
+          Add your OpenAI API key in Settings to start chatting with your notes.
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => window.location.href = "/settings"}
+        >
+          Go to Settings
+        </Button>
       </div>
     );
   }
