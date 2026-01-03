@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button, TagInput, DropdownMenu, DropdownMenuItem } from "@/components/ui";
 import { NoteEditor } from "@/components/editor";
+import { NoteActionsToolbar } from "@/components/notes/note-actions-toolbar";
 import { useNotesStore } from "@/stores/notes-store";
 import { useFoldersStore } from "@/stores/folders-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -186,33 +187,15 @@ export default function NotePage() {
             <SparklesIcon className="h-4 w-4 text-accent-500" />
             AI
           </Button>
-
-          {/* Pin */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleTogglePin}
-            title={note.isPinned ? "Unpin" : "Pin"}
-          >
-            <PinIcon
-              className={cn(
-                "h-4 w-4",
-                note.isPinned ? "fill-primary-500 text-primary-500" : "text-neutral-400"
-              )}
-            />
-          </Button>
-
-          {/* Delete */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            title="Delete note"
-          >
-            <TrashIcon className="h-4 w-4 text-neutral-400 hover:text-error" />
-          </Button>
         </div>
       </header>
+
+      {/* Note Actions Toolbar */}
+      <NoteActionsToolbar
+        isPinned={note.isPinned}
+        onTogglePin={handleTogglePin}
+        onDelete={handleDelete}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
@@ -220,7 +203,7 @@ export default function NotePage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="mx-auto max-w-3xl px-6 py-8"
+          className="mx-auto max-w-3xl px-6 py-4"
         >
           {/* Title */}
           <input
