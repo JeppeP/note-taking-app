@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { debounce } from "@/lib/utils/debounce";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { BlockContent } from "@/types";
 
 interface NoteEditorProps {
@@ -20,6 +21,21 @@ export function NoteEditor({
   editable = true,
 }: NoteEditorProps) {
   const isInitialMount = useRef(true);
+  const { theme } = useSettingsStore();
+  const [editorTheme, setEditorTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const updateTheme = () => setEditorTheme(mediaQuery.matches ? "dark" : "light");
+      updateTheme();
+      mediaQuery.addEventListener("change", updateTheme);
+      return () => mediaQuery.removeEventListener("change", updateTheme);
+    }
+
+    setEditorTheme(theme);
+    return undefined;
+  }, [theme]);
 
   const editor = useCreateBlockNote({
     initialContent: initialContent && initialContent.length > 0 ? initialContent : undefined,
@@ -41,6 +57,7 @@ export function NoteEditor({
   return (
     <div className="bn-container min-h-[500px]">
       <BlockNoteView
+        key={editorTheme}
         editor={editor}
         editable={editable}
         onChange={() => {
@@ -49,7 +66,7 @@ export function NoteEditor({
           }
           isInitialMount.current = false;
         }}
-        theme="light"
+        theme={editorTheme}
         className="min-h-[500px]"
       />
     </div>
