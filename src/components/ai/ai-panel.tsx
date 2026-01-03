@@ -81,7 +81,7 @@ export function AIPanel() {
 
         {/* Content */}
         <div className="flex-1 overflow-hidden">
-          {!hasAPIKey() ? (
+          {!hasAPIKey() && aiPanelTab !== "voice" ? (
             <NoAPIKey />
           ) : (
             <>

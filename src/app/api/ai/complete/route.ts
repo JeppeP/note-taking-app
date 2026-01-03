@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { action, text, context, apiKey, model = "gpt-4o-mini" } = await req.json();
+    const { action, prompt, context, apiKey, model = "gpt-4o-mini" } = await req.json();
 
     // Validate API key
     if (!apiKey) {
@@ -49,17 +49,17 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!text) {
+    if (!prompt) {
       return new Response(JSON.stringify({ error: "Text required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const prompt = PROMPTS[action] || PROMPTS.improve;
+    const promptTemplate = PROMPTS[action] || PROMPTS.improve;
     const fullPrompt = context
-      ? `Context from the note:\n${context}\n\n${prompt}\n\n${text}`
-      : `${prompt}\n\n${text}`;
+      ? `Context from the note:\n${context}\n\n${promptTemplate}\n\n${prompt}`
+      : `${promptTemplate}\n\n${prompt}`;
 
     // Use user-provided API key
     const openai = createOpenAI({ apiKey });
