@@ -29,7 +29,7 @@ export function Sidebar() {
   const router = useRouter();
   const { notes, loadNotes, createNote, currentNoteId, setCurrentNote, updateNote } = useNotesStore();
   const { folders, loadFolders, getFolderTree, getUnifiedList } = useFoldersStore();
-  const { expandedFolders, toggleFolder, toggleAIPanel, toggleCommandPalette } = useUIStore();
+  const { expandedFolders, toggleFolder, toggleAIPanel, toggleCommandPalette, sidebarOpen, toggleSidebar } = useUIStore();
 
   // Dialog state
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -59,11 +59,19 @@ export function Sidebar() {
   const handleNewNote = async () => {
     const note = await createNote();
     router.push(`/notes/${note.id}`);
+    // Close sidebar on mobile to show the edit view
+    if (sidebarOpen) {
+      toggleSidebar();
+    }
   };
 
   const handleNoteClick = (noteId: string) => {
     setCurrentNote(noteId);
     router.push(`/notes/${noteId}`);
+    // Close sidebar on mobile to show the note
+    if (sidebarOpen) {
+      toggleSidebar();
+    }
   };
 
   const handleEditFolder = (folder: Folder) => {
